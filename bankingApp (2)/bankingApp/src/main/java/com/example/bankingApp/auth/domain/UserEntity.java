@@ -21,10 +21,10 @@ public class UserEntity implements UserDetails {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "user_id")
-  private Long user_id;
+  private Long id;
 
   @Column(name = "username", nullable = false)
-  private String name; //UserDetails sınıfı içerisinde username olarak tanımlandığından veriyi alabilmek için name olarak düzenlendi.
+  private String username; //UserDetails sınıfı içerisinde username olarak tanımlandığından veriyi alabilmek için name olarak düzenlendi.
 
   @Column(name = "password", nullable = false)
   private String password;
@@ -34,7 +34,8 @@ public class UserEntity implements UserDetails {
 
   @Column(name = "created_at", nullable = false, updatable = false)
   @CreationTimestamp                //CreationTimestamp anatosyonu ile default olarak ekleniyor.
-  private LocalDateTime created_at;
+  private LocalDateTime createdAt;
+  private String name;
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -68,4 +69,8 @@ public class UserEntity implements UserDetails {
   public UserEntity getUser() {
 
     return null;}
+
+  public String getName() {
+    return name;
   }
+}
