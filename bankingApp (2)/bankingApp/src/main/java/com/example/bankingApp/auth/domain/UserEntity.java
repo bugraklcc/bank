@@ -1,14 +1,15 @@
 package com.example.bankingApp.auth.domain;
 
+
+import com.example.bankingApp.account.model.Account;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 @Data
@@ -17,11 +18,11 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 @Table(name = "users")
-public class UserEntity implements UserDetails {
+public class UserEntity  {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "user_id")
-  private Long id;
+  private Long userId;
 
   @Column(name = "username", nullable = false)
   private String username; //UserDetails sınıfı içerisinde username olarak tanımlandığından veriyi alabilmek için name olarak düzenlendi.
@@ -35,42 +36,6 @@ public class UserEntity implements UserDetails {
   @Column(name = "created_at", nullable = false, updatable = false)
   @CreationTimestamp                //CreationTimestamp anatosyonu ile default olarak ekleniyor.
   private LocalDateTime createdAt;
-  private String name;
-
-  @Override
-  public Collection<? extends GrantedAuthority> getAuthorities() {
-    List<GrantedAuthority> authorities = new ArrayList<>();
-    return authorities;
+  @OneToMany(mappedBy = "user")
+  List<Account> accounts;
   }
-  @Override
-  public String getUsername() { //UserDetails sınıfı ile birlikte geliyor. Email bilgisini veriyoruz.
-    return this.email;
-  }
-  @Override
-  public boolean isAccountNonExpired() {
-    return true;
-  }
-
-  @Override
-  public boolean isAccountNonLocked() {
-    return true;
-  }
-
-  @Override
-  public boolean isCredentialsNonExpired() {
-    return true;
-  }
-
-  @Override
-  public boolean isEnabled() {
-    return true;
-  }
-
-  public UserEntity getUser() {
-
-    return null;}
-
-  public String getName() {
-    return name;
-  }
-}

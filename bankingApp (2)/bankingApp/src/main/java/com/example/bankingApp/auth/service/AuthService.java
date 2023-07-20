@@ -12,5 +12,5 @@ public interface AuthService {
 
   ResponseEntity<AuthResponse> loginUser(AuthRequest authRequest);
 
-  ResponseEntity<String> testLoggedUserName(UserEntity userEntity);
+  ResponseEntity<String> testLoggedUserName(Long userId);
 }

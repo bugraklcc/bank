@@ -31,7 +31,7 @@ public class AuthController {
 
   @GetMapping("/test")
   public ResponseEntity<String> testMethod() {
-    return authService.testLoggedUserName(authenticationUtils.getCurrentUserInfo());
+    return authService.testLoggedUserName(authenticationUtils.getCurrentUserId());
   }
 
 }
