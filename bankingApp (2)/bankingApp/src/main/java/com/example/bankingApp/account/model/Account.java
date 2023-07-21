@@ -36,7 +36,6 @@ public class Account {
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @Override
     public String toString() {
         return "Account{" +
                 "accountId=" + accountId +

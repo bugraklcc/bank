@@ -2,9 +2,9 @@ package com.example.bankingApp.account.controller;
 
 import com.example.bankingApp.account.model.Account;
 import com.example.bankingApp.account.model.response.AccountList;
-import com.example.bankingApp.account.model.response.DepositRequest;
-import com.example.bankingApp.account.model.response.TransferRequest;
-import com.example.bankingApp.account.model.response.WithdrawRequest;
+import com.example.bankingApp.account.model.request.DepositRequest;
+import com.example.bankingApp.account.model.request.TransferRequest;
+import com.example.bankingApp.account.model.request.WithdrawRequest;
 import com.example.bankingApp.account.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
