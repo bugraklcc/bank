@@ -6,6 +6,8 @@ import com.example.bankingApp.account.repository.AccountRepository;
 import com.example.bankingApp.auth.domain.UserEntity;
 import com.example.bankingApp.auth.repository.UserRepository;
 import com.example.bankingApp.auth.utils.AuthenticationUtils;
+import com.example.bankingApp.transaction.model.Transaction;
+import com.example.bankingApp.transaction.repository.TransactionRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 public class AccountServiceImpl implements AccountService {
+    private final TransactionRepository transactionRepository;
     private AccountRepository accountRepository;
     private UserRepository userRepository;
     private AuthenticationUtils authenticationUtils;
@@ -68,6 +71,15 @@ public class AccountServiceImpl implements AccountService {
         account.setBalance(newBalance);
         accountRepository.save(account);
 
+        // Transaction kaydını yapalım
+        Transaction transaction = new Transaction();
+        transaction.setSender(null); // Para yükleme işleminde gönderen yok
+        transaction.setReceiver(account);
+        transaction.setAmount(amount);
+        transaction.setCurrency(account.getCurrency());
+        transaction.setUser(account.getUser());
+        transactionRepository.save(transaction);
+
         return ResponseEntity.ok("Para yükleme işlemi başarılı. Yeni bakiye: " + newBalance);
     }
 
@@ -82,6 +94,16 @@ public class AccountServiceImpl implements AccountService {
         if (newBalance.compareTo(BigDecimal.ZERO) >= 0) {
             account.setBalance(newBalance);
             accountRepository.save(account);
+
+            // Transaction kaydını yapalım
+            Transaction transaction = new Transaction();
+            transaction.setSender(account);
+            transaction.setReceiver(null); // Para çekme işleminde alıcı yok
+            transaction.setAmount(amount.negate()); // Negatif değer olarak kaydedelim
+            transaction.setCurrency(account.getCurrency());
+            transaction.setUser(account.getUser());
+            transactionRepository.save(transaction);
+
             return ResponseEntity.ok("Para çekme işlemi başarılı. Yeni bakiye: " + newBalance);
         } else {
             return ResponseEntity.badRequest().body("Bakiye yetersiz. Çekme işlemi gerçekleştirilemedi.");
@@ -109,12 +131,20 @@ public class AccountServiceImpl implements AccountService {
             accountRepository.save(sourceAccount);
             accountRepository.save(targetAccount);
 
+
+            Transaction transaction = new Transaction();
+            transaction.setSender(sourceAccount);
+            transaction.setReceiver(targetAccount);
+            transaction.setAmount(amount);
+            transaction.setCurrency(sourceAccount.getCurrency());
+            transaction.setUser(sourceAccount.getUser());
+
+            transactionRepository.save(transaction);
+
             return ResponseEntity.ok("Para transferi işlemi başarılı. Kaynak hesap bakiyesi: " + newSourceBalance
                     + ", Hedef hesap bakiyesi: " + newTargetBalance);
         } else {
             return ResponseEntity.badRequest().body("Kaynak hesabın bakiyesi yetersiz. Transfer işlemi gerçekleştirilemedi.");
         }
     }
-
-
 }

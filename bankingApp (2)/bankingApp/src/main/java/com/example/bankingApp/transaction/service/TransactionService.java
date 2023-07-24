@@ -1,9 +1,9 @@
 package com.example.bankingApp.transaction.service;
 
-import com.example.bankingApp.transaction.model.Transaction;
+import com.example.bankingApp.transaction.model.response.AccountList;
 
 import java.util.List;
 
 public interface TransactionService {
-    List<Transaction> getTransactionsByAccountId(Long accountId);
+    List<AccountList> getAllAccountLists();
 }

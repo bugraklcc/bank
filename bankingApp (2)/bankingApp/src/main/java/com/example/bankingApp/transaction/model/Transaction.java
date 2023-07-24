@@ -1,6 +1,7 @@
 package com.example.bankingApp.transaction.model;
 
 import com.example.bankingApp.account.model.Account;
+import com.example.bankingApp.auth.domain.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -30,6 +31,10 @@ public class Transaction {
     @JoinColumn(name = "receiver_id", referencedColumnName = "account_id")
     private Account receiver;
 
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_id")
+    private UserEntity user;
+
     @Column(name = "amount", nullable = false)
     private BigDecimal amount;
 
@@ -46,6 +51,7 @@ public class Transaction {
                 "transactionId=" + transactionId +
                 ", sender=" + sender +
                 ", receiver=" + receiver +
+                ", user=" + user +
                 ", amount=" + amount +
                 ", currency='" + currency + '\'' +
                 ", createdAt=" + createdAt +
