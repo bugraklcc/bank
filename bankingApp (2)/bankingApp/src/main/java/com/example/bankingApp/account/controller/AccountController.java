@@ -43,7 +43,7 @@ public class AccountController {
     @PostMapping("/withdraw")
     public ResponseEntity<String> withdraw(@RequestBody WithdrawRequest withdrawRequest) {
         Long accountId = withdrawRequest.getAccountId();
-        BigDecimal amount = new BigDecimal(withdrawRequest.getAmount());
+        BigDecimal amount = new BigDecimal(String.valueOf(withdrawRequest.getAmount()));
         return accountService.withdraw(accountId, amount);
     }
 
@@ -51,8 +51,25 @@ public class AccountController {
     public ResponseEntity<String> transfer(@RequestBody TransferRequest transferRequest) {
         Long sourceAccountId = transferRequest.getSourceAccountId();
         Long targetAccountId = transferRequest.getTargetAccountId();
-        BigDecimal amount = new BigDecimal(transferRequest.getAmount());
+        BigDecimal amount = new BigDecimal(String.valueOf(transferRequest.getAmount()));
         return accountService.transfer(sourceAccountId, targetAccountId, amount);
+    }
+    @PostMapping("/depositWithCurrency")
+    public ResponseEntity<String> depositWithCurrency(@RequestBody DepositRequest depositRequest) {
+        Long accountId = depositRequest.getAccountId();
+        String amount = depositRequest.getAmount();
+        String currency = depositRequest.getCurrency();
+        return accountService.depositWithCurrency(accountId, amount, currency);
+    }
+
+
+    @PostMapping("/transferWithCurrency")
+    public ResponseEntity<String> transferWithCurrency(@RequestBody TransferRequest transferRequest) {
+        Long sourceAccountId = transferRequest.getSourceAccountId();
+        Long targetAccountId = transferRequest.getTargetAccountId();
+        String amount = transferRequest.getAmount();
+        String currency = transferRequest.getCurrency();
+        return accountService.transferWithCurrency(sourceAccountId, targetAccountId, amount, currency);
     }
 }
 

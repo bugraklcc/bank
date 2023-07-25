@@ -3,6 +3,7 @@ package com.example.bankingApp.account.service;
 import com.example.bankingApp.account.model.Account;
 import com.example.bankingApp.account.model.response.AccountList;
 import com.example.bankingApp.account.repository.AccountRepository;
+import com.example.bankingApp.account.service.exchange.ExchangeService;
 import com.example.bankingApp.auth.domain.UserEntity;
 import com.example.bankingApp.auth.repository.UserRepository;
 import com.example.bankingApp.auth.utils.AuthenticationUtils;
@@ -21,10 +22,12 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 public class AccountServiceImpl implements AccountService {
+
     private final TransactionRepository transactionRepository;
-    private AccountRepository accountRepository;
-    private UserRepository userRepository;
-    private AuthenticationUtils authenticationUtils;
+    private final AccountRepository accountRepository;
+    private final UserRepository userRepository;
+    private final AuthenticationUtils authenticationUtils;
+    private final ExchangeService exchangeService;
 
     @Override
     public ResponseEntity<String> createAccount(Account account) {
@@ -131,7 +134,6 @@ public class AccountServiceImpl implements AccountService {
             accountRepository.save(sourceAccount);
             accountRepository.save(targetAccount);
 
-
             Transaction transaction = new Transaction();
             transaction.setSender(sourceAccount);
             transaction.setReceiver(targetAccount);
@@ -147,4 +149,93 @@ public class AccountServiceImpl implements AccountService {
             return ResponseEntity.badRequest().body("Kaynak hesabın bakiyesi yetersiz. Transfer işlemi gerçekleştirilemedi.");
         }
     }
+
+    @Override
+    public ResponseEntity<String> depositWithCurrency(Long accountId, String amount, String currency) {
+        // Burada döviz kuru servisine çağrı yaparak güncel döviz kurlarını alabilir ve para yüklemeyi gerçekleştirebilirsiniz.
+        // Döviz kurlarını kullanarak para yükleme işlemini implemente edin.
+        BigDecimal amountValue = new BigDecimal(amount);
+
+        // Döviz kurlarını exchangeService üzerinden alalım
+        BigDecimal exchangeRate = exchangeService.getExchangeRate(currency, "TRY"); // İlk parametre verilen para birimine, ikinci parametre ise çevrilmek istenen para birimine karşılık gelen kuru döndürecektir.
+
+        if (exchangeRate == null) {
+            return ResponseEntity.badRequest().body("Döviz kuru bulunamadı. Para yükleme işlemi gerçekleştirilemedi.");
+        }
+
+        BigDecimal newBalance = amountValue.multiply(exchangeRate);
+
+        // Hesap üzerinde güncelleme yapalım
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+
+        BigDecimal currentBalance = account.getBalance();
+        BigDecimal updatedBalance = currentBalance.add(newBalance);
+        account.setBalance(updatedBalance);
+        accountRepository.save(account);
+
+        // Transaction kaydını yapalım
+        Transaction transaction = new Transaction();
+        transaction.setSender(null); // Para yükleme işleminde gönderen yok
+        transaction.setReceiver(account);
+        transaction.setAmount(newBalance);
+        transaction.setCurrency(account.getCurrency());
+        transaction.setUser(account.getUser());
+        transactionRepository.save(transaction);
+
+        return ResponseEntity.ok("Para yükleme işlemi başarılı. Yeni bakiye: " + updatedBalance);
+    }
+
+    @Override
+    public ResponseEntity<String> transferWithCurrency(Long sourceAccountId, Long targetAccountId, String amount, String currency) {
+
+        BigDecimal amountValue = new BigDecimal(amount);
+
+        // Döviz kurlarını exchangeService üzerinden alalım
+        BigDecimal exchangeRate = exchangeService.getExchangeRate(currency, "TRY"); // İlk parametre verilen para birimine, ikinci parametre ise çevrilmek istenen para birimine karşılık gelen kuru döndürecektir.
+
+        if (exchangeRate == null) {
+            return ResponseEntity.badRequest().body("Döviz kuru bulunamadı. Para transferi işlemi gerçekleştirilemedi.");
+        }
+
+        BigDecimal transferredAmount = amountValue.multiply(exchangeRate);
+
+        // Kaynak hesap üzerinde güncelleme yapalım
+        Account sourceAccount = accountRepository.findById(sourceAccountId)
+                .orElseThrow(() -> new IllegalArgumentException("Source account not found"));
+
+        BigDecimal sourceBalance = sourceAccount.getBalance();
+        BigDecimal newSourceBalance = sourceBalance.subtract(transferredAmount);
+
+        if (newSourceBalance.compareTo(BigDecimal.ZERO) >= 0) {
+            sourceAccount.setBalance(newSourceBalance);
+            accountRepository.save(sourceAccount);
+
+            // Hedef hesap üzerinde güncelleme yapalım
+            Account targetAccount = accountRepository.findById(targetAccountId)
+                    .orElseThrow(() -> new IllegalArgumentException("Target account not found"));
+
+            BigDecimal targetBalance = targetAccount.getBalance();
+            BigDecimal newTargetBalance = targetBalance.add(transferredAmount);
+
+            targetAccount.setBalance(newTargetBalance);
+            accountRepository.save(targetAccount);
+
+            // Transaction kaydını yapalım
+            Transaction transaction = new Transaction();
+            transaction.setSender(sourceAccount);
+            transaction.setReceiver(targetAccount);
+            transaction.setAmount(transferredAmount);
+            transaction.setCurrency(sourceAccount.getCurrency());
+            transaction.setUser(sourceAccount.getUser());
+            transactionRepository.save(transaction);
+
+            return ResponseEntity.ok("Para transferi işlemi başarılı. Kaynak hesap bakiyesi: " + newSourceBalance
+                    + ", Hedef hesap bakiyesi: " + newTargetBalance);
+        } else {
+            return ResponseEntity.badRequest().body("Kaynak hesabın bakiyesi yetersiz. Transfer işlemi gerçekleştirilemedi.");
+        }
+    }
+
+
 }
