@@ -14,5 +14,5 @@ public class WithdrawResponse {
    private String email;
    private String previousBalance;
    private String newBalance;
-   private String errorMessage;
+   private String pdfDownloadLink;
 }

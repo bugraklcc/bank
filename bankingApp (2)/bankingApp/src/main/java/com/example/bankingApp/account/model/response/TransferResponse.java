@@ -12,6 +12,5 @@ public class TransferResponse {
     private Long targetAccountId;
     private String sourceBalance;
     private String targetBalance;
-    private String errorMessage;
 }
 

@@ -1,12 +1,14 @@
 package com.example.bankingApp.account.service;
 
 import com.example.bankingApp.account.model.Account;
+import com.example.bankingApp.account.model.request.DepositRequest;
+import com.example.bankingApp.account.model.request.TransferRequest;
+import com.example.bankingApp.account.model.request.WithdrawRequest;
 import com.example.bankingApp.account.model.response.AccountList;
 import com.example.bankingApp.account.model.response.TransferResponse;
 import com.example.bankingApp.account.model.response.WithdrawResponse;
 import org.springframework.http.ResponseEntity;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 public interface AccountService {
@@ -14,12 +16,12 @@ public interface AccountService {
 
   ResponseEntity<List<AccountList>> getAccountsByUserId();
 
-  ResponseEntity<WithdrawResponse> deposit(Long accountId, BigDecimal amount);
+  ResponseEntity<WithdrawResponse> deposit(DepositRequest depositRequest);
 
-  ResponseEntity<TransferResponse> transfer(Long sourceAccountId, Long targetAccountId, BigDecimal amount);
+  ResponseEntity<TransferResponse> transfer(TransferRequest transferRequest);
 
   ResponseEntity<String> depositWithCurrency(Long accountId, String amount, String currency);
 
   ResponseEntity<String> transferWithCurrency(Long sourceAccountId, Long targetAccountId, String amount, String currency);
-  ResponseEntity<WithdrawResponse> withdraw(Long accountId, BigDecimal amount);
+  ResponseEntity<WithdrawResponse> withdraw(WithdrawRequest withdrawRequest);
 }

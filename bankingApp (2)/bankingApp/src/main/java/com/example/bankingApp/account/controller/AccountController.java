@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -35,24 +34,17 @@ public class AccountController {
 
     @PostMapping("/deposit")
     public ResponseEntity<WithdrawResponse> deposit(@RequestBody DepositRequest depositRequest) {
-        Long accountId = depositRequest.getAccountId();
-        BigDecimal amount = new BigDecimal(depositRequest.getAmount());
-        return accountService.deposit(accountId, amount);
+        return accountService.deposit(depositRequest);
     }
 
     @PostMapping("/withdraw")
     public ResponseEntity<WithdrawResponse> withdraw(@RequestBody WithdrawRequest withdrawRequest) {
-        Long accountId = withdrawRequest.getAccountId();
-        BigDecimal amount = new BigDecimal(String.valueOf(withdrawRequest.getAmount()));
-        return accountService.withdraw(accountId, amount);
+        return accountService.withdraw(withdrawRequest);
     }
 
     @PostMapping("/transfer")
     public ResponseEntity<TransferResponse> transfer(@RequestBody TransferRequest transferRequest) {
-        Long sourceAccountId = transferRequest.getSourceAccountId();
-        Long targetAccountId = transferRequest.getTargetAccountId();
-        BigDecimal amount = new BigDecimal(String.valueOf(transferRequest.getAmount()));
-        return accountService.transfer(sourceAccountId, targetAccountId, amount);
+        return accountService.transfer(transferRequest);
     }
 
     @PostMapping("/depositWithCurrency")
@@ -71,7 +63,5 @@ public class AccountController {
         String currency = transferRequest.getCurrency();
         return accountService.transferWithCurrency(sourceAccountId, targetAccountId, amount, currency);
     }
+
 }
-
-
-
