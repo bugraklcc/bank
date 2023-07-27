@@ -1,10 +1,12 @@
 package com.example.bankingApp.account.controller;
 
 import com.example.bankingApp.account.model.Account;
-import com.example.bankingApp.account.model.response.AccountList;
 import com.example.bankingApp.account.model.request.DepositRequest;
 import com.example.bankingApp.account.model.request.TransferRequest;
 import com.example.bankingApp.account.model.request.WithdrawRequest;
+import com.example.bankingApp.account.model.response.AccountList;
+import com.example.bankingApp.account.model.response.TransferResponse;
+import com.example.bankingApp.account.model.response.WithdrawResponse;
 import com.example.bankingApp.account.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +22,6 @@ public class AccountController {
 
     private final AccountService accountService;
 
-
-
     @PostMapping("/create")
     public ResponseEntity<String> createAccount(@RequestBody Account account) {
         return accountService.createAccount(account);
@@ -34,26 +34,27 @@ public class AccountController {
     }
 
     @PostMapping("/deposit")
-    public ResponseEntity<String> deposit(@RequestBody DepositRequest depositRequest) {
+    public ResponseEntity<WithdrawResponse> deposit(@RequestBody DepositRequest depositRequest) {
         Long accountId = depositRequest.getAccountId();
         BigDecimal amount = new BigDecimal(depositRequest.getAmount());
         return accountService.deposit(accountId, amount);
     }
 
     @PostMapping("/withdraw")
-    public ResponseEntity<String> withdraw(@RequestBody WithdrawRequest withdrawRequest) {
+    public ResponseEntity<WithdrawResponse> withdraw(@RequestBody WithdrawRequest withdrawRequest) {
         Long accountId = withdrawRequest.getAccountId();
         BigDecimal amount = new BigDecimal(String.valueOf(withdrawRequest.getAmount()));
         return accountService.withdraw(accountId, amount);
     }
 
     @PostMapping("/transfer")
-    public ResponseEntity<String> transfer(@RequestBody TransferRequest transferRequest) {
+    public ResponseEntity<TransferResponse> transfer(@RequestBody TransferRequest transferRequest) {
         Long sourceAccountId = transferRequest.getSourceAccountId();
         Long targetAccountId = transferRequest.getTargetAccountId();
         BigDecimal amount = new BigDecimal(String.valueOf(transferRequest.getAmount()));
         return accountService.transfer(sourceAccountId, targetAccountId, amount);
     }
+
     @PostMapping("/depositWithCurrency")
     public ResponseEntity<String> depositWithCurrency(@RequestBody DepositRequest depositRequest) {
         Long accountId = depositRequest.getAccountId();
@@ -61,7 +62,6 @@ public class AccountController {
         String currency = depositRequest.getCurrency();
         return accountService.depositWithCurrency(accountId, amount, currency);
     }
-
 
     @PostMapping("/transferWithCurrency")
     public ResponseEntity<String> transferWithCurrency(@RequestBody TransferRequest transferRequest) {

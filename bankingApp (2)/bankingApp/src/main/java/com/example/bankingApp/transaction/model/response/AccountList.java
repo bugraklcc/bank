@@ -13,6 +13,7 @@ public class AccountList {
 
     private String username;
     private String email;
+    private String previousBalance;
     private String balance;
     private String currency;
     private LocalDateTime createdAt;

@@ -6,6 +6,7 @@ import com.example.bankingApp.transaction.repository.TransactionRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,13 +34,21 @@ public class TransactionServiceImpl implements TransactionService {
             transactionType = "Unknown";
         }
 
+        BigDecimal previousBalance;
+        if (transaction.getSender() != null) {
+            previousBalance = transaction.getSender().getBalance().add(transaction.getAmount());
+        } else {
+            previousBalance = transaction.getReceiver().getBalance().subtract(transaction.getAmount());
+        }
+
         return AccountList.builder()
                 .username(transaction.getSender() != null ? transaction.getSender().getUsername() : "-")
                 .email(transaction.getSender() != null ? transaction.getSender().getEmail() : "-")
-                .accountID(transaction.getSender() != null ? transaction.getSender().getAccountId().toString() : "-")
+                .previousBalance(previousBalance.toString())
                 .balance(transaction.getSender() != null ? transaction.getSender().getBalance().toString() : "-")
                 .currency(transaction.getSender() != null ? transaction.getSender().getCurrency() : "-")
                 .createdAt(transaction.getSender() != null ? transaction.getSender().getCreatedAt() : null)
+                .accountID(transaction.getSender() != null ? transaction.getSender().getAccountId().toString() : "-")
                 .senderUsername(transaction.getSender() != null ? transaction.getSender().getUser().getUsername() : "-")
                 .receiverUsername(transaction.getReceiver() != null ? transaction.getReceiver().getUser().getUsername() : "-")
                 .transactionType(transactionType)
@@ -47,6 +56,5 @@ public class TransactionServiceImpl implements TransactionService {
                 .transactionAmount(transaction.getAmount().toString())
                 .build();
     }
-
 
 }

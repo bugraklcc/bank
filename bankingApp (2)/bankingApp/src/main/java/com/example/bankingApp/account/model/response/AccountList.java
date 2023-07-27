@@ -16,5 +16,6 @@ public class AccountList {
     private String balance;
     private String currency;
     private LocalDateTime createdAt;
-    private String accountID;
+    private String accountId;
+
 }
