@@ -9,10 +9,10 @@ import lombok.Setter;
 @Builder
 public class WithdrawResponse {
 
-   private String username;
-   private Long accountId;
-   private String email;
-   private String previousBalance;
-   private String newBalance;
-   private String pdfDownloadLink;
+    private String username;
+    private Long accountId;
+    private String email;
+    private String previousBalance;
+    private String newBalance;
+    private String pdfDownloadLink;
 }

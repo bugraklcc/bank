@@ -4,26 +4,28 @@ import com.example.bankingApp.account.model.Account;
 import com.example.bankingApp.account.model.request.DepositRequest;
 import com.example.bankingApp.account.model.request.TransferRequest;
 import com.example.bankingApp.account.model.request.WithdrawRequest;
-import com.example.bankingApp.account.model.response.*;
+import com.example.bankingApp.account.model.response.AccountList;
+import com.example.bankingApp.account.model.response.TransferResponse;
+import com.example.bankingApp.account.model.response.WithdrawResponse;
 import com.example.bankingApp.account.repository.AccountRepository;
 import com.example.bankingApp.account.service.exchange.ExchangeService;
 import com.example.bankingApp.account.service.pdf.PdfService;
 import com.example.bankingApp.auth.domain.UserEntity;
-import com.example.bankingApp.auth.repository.UserRepository;
-import com.example.bankingApp.auth.utils.AuthenticationUtils;
 import com.example.bankingApp.auth.domain.error.AuthErrorResponse;
 import com.example.bankingApp.auth.domain.error.AuthErrorResponseType;
+import com.example.bankingApp.auth.repository.UserRepository;
+import com.example.bankingApp.auth.utils.AuthenticationUtils;
 import com.example.bankingApp.transaction.model.Transaction;
 import com.example.bankingApp.transaction.repository.TransactionRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+
 @Service
 @AllArgsConstructor
 public class AccountServiceImpl implements AccountService {
@@ -33,6 +35,7 @@ public class AccountServiceImpl implements AccountService {
     private final UserRepository userRepository;
     private final AuthenticationUtils authenticationUtils;
     private final ExchangeService exchangeService;
+
     @Override
     public ResponseEntity<String> createAccount(Account account) {
 
@@ -51,7 +54,7 @@ public class AccountServiceImpl implements AccountService {
     public ResponseEntity<List<AccountList>> getAccountsByUserId() {
 
         UserEntity user = userRepository.findById(authenticationUtils.getCurrentUserId())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new AuthErrorResponse(AuthErrorResponseType.ACCOUNT_NOT_FOUND));
         List<AccountList> accountLists = new ArrayList<>();
         user.getAccounts().forEach(account -> {
 
@@ -73,7 +76,7 @@ public class AccountServiceImpl implements AccountService {
         Long accountId = depositRequest.getAccountId();
         BigDecimal amount = new BigDecimal(String.valueOf(depositRequest.getAmount()));
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new IllegalArgumentException("Hesap bulunamadı"));
+                .orElseThrow(() -> new AuthErrorResponse(AuthErrorResponseType.ACCOUNT_NOT_FOUND));
 
         BigDecimal currentBalance = account.getBalance();
         BigDecimal newBalance = currentBalance.add(amount);
@@ -105,7 +108,7 @@ public class AccountServiceImpl implements AccountService {
         Long accountId = withdrawRequest.getAccountId();
         BigDecimal amount = new BigDecimal(String.valueOf(withdrawRequest.getAmount()));
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new IllegalArgumentException("Hesap bulunamadı"));
+                .orElseThrow(() -> new AuthErrorResponse(AuthErrorResponseType.ACCOUNT_NOT_FOUND));
 
         BigDecimal currentBalance = account.getBalance();
         BigDecimal newBalance = currentBalance.subtract(amount);
@@ -136,7 +139,7 @@ public class AccountServiceImpl implements AccountService {
         } else {
             // Yeterli bakiye yok, çekme işlemi gerçekleştirilemedi
             response.setNewBalance(currentBalance.toString()); // Yeni bakiyeyi önceki bakiye ile aynı yapalım
-            throw new AuthErrorResponse(AuthErrorResponseType.AUTH_NOT_FOUND);
+            throw new AuthErrorResponse(AuthErrorResponseType.INSUFFICIENT_BALANCE_WITHDRAW);
 
         }
 
@@ -160,10 +163,10 @@ public class AccountServiceImpl implements AccountService {
         Long targetAccountId = transferRequest.getTargetAccountId();
         BigDecimal amount = new BigDecimal(String.valueOf(transferRequest.getAmount()));
         Account sourceAccount = accountRepository.findById(sourceAccountId)
-                .orElseThrow(() -> new IllegalArgumentException("Kaynak hesap bulunamadı"));
+                .orElseThrow(() -> new AuthErrorResponse(AuthErrorResponseType.SOURCE_ACCOUNT_NOT_FOUND));
 
         Account targetAccount = accountRepository.findById(targetAccountId)
-                .orElseThrow(() -> new IllegalArgumentException("Hedef hesap bulunamadı"));
+                .orElseThrow(() -> new AuthErrorResponse(AuthErrorResponseType.TARGET_ACCOUNT_NOT_FOUND));
 
         BigDecimal sourceBalance = sourceAccount.getBalance();
         BigDecimal targetBalance = targetAccount.getBalance();
@@ -195,7 +198,7 @@ public class AccountServiceImpl implements AccountService {
             response.setTargetBalance(newTargetBalance.toString()); // Hedef hesap yeni bakiyesi
         } else {
             // Yetersiz bakiye, transfer işlemi gerçekleştirilemedi
-            throw new AuthErrorResponse(AuthErrorResponseType.AUTH_NOT_FOUND);
+            throw new AuthErrorResponse(AuthErrorResponseType.INSUFFICIENT_BALANCE);
         }
 
         return ResponseEntity.ok(response);
@@ -270,7 +273,6 @@ public class AccountServiceImpl implements AccountService {
             return ResponseEntity.badRequest().body("Kaynak hesabın bakiyesi yetersiz. Transfer işlemi gerçekleştirilemedi.");
         }
     }
-
 
 
 }

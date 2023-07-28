@@ -23,43 +23,43 @@ import java.util.Optional;
 
 @Service
 @AllArgsConstructor
-public class AuthServiceImpl implements AuthService{
-  private UserRepository userRepository;
-  private BCryptPasswordEncoder bCryptPasswordEncoder;
-  private AuthenticationManager authenticationManager;
-  private JwtUtilities jwtUtilities;
-  private final AuthenticationUtils authenticationUtils;
+public class AuthServiceImpl implements AuthService {
+    private UserRepository userRepository;
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
+    private AuthenticationManager authenticationManager;
+    private JwtUtilities jwtUtilities;
+    private final AuthenticationUtils authenticationUtils;
 
-  @Override
-  public ResponseEntity<UserEntity> registerUser(UserEntity userEntity) {
-    Optional<UserEntity> userInfo= userRepository.findByEmail(userEntity.getUsername());
-    if(userInfo.isPresent()){
-      throw new RuntimeException("Email already exists in database");
-    }else{
-      userEntity.setPassword(bCryptPasswordEncoder.encode(userEntity.getPassword()));
-      UserEntity savedUser = userRepository.save(userEntity);
-      return ResponseEntity.ok(savedUser);
+    @Override
+    public ResponseEntity<UserEntity> registerUser(UserEntity userEntity) {
+        Optional<UserEntity> userInfo = userRepository.findByEmail(userEntity.getUsername());
+        if (userInfo.isPresent()) {
+            throw new RuntimeException("Email already exists in database");
+        } else {
+            userEntity.setPassword(bCryptPasswordEncoder.encode(userEntity.getPassword()));
+            UserEntity savedUser = userRepository.save(userEntity);
+            return ResponseEntity.ok(savedUser);
+        }
     }
-  }
 
-  @Override
-  public ResponseEntity<AuthResponse> loginUser(AuthRequest authRequest) {
-    Authentication authentication= authenticationManager.authenticate(
-        new UsernamePasswordAuthenticationToken(
-            authRequest.getEmail(),
-            authRequest.getPassword()
-        )
-    );
-    SecurityContextHolder.getContext().setAuthentication(authentication);
-    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-    String token = jwtUtilities.generateToken(userDetails.getEmail());
-    return ResponseEntity.ok(AuthResponse.builder().token(token).build());
-  }
+    @Override
+    public ResponseEntity<AuthResponse> loginUser(AuthRequest authRequest) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        authRequest.getEmail(),
+                        authRequest.getPassword()
+                )
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        String token = jwtUtilities.generateToken(userDetails.getEmail());
+        return ResponseEntity.ok(AuthResponse.builder().token(token).build());
+    }
 
-  @Override
-  public ResponseEntity<String> testLoggedUserName(Long userId) {
-    System.out.println("userId geldi");
-    TestAuthResponse testAuthResponse = TestAuthResponse.builder().username(String.valueOf(userId)).build();
-    return ResponseEntity.ok(testAuthResponse.message());
-  }
+    @Override
+    public ResponseEntity<String> testLoggedUserName(Long userId) {
+        System.out.println("userId geldi");
+        TestAuthResponse testAuthResponse = TestAuthResponse.builder().username(String.valueOf(userId)).build();
+        return ResponseEntity.ok(testAuthResponse.message());
+    }
 }

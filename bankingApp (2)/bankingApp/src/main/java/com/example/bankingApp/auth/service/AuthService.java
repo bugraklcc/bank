@@ -8,9 +8,9 @@ import org.springframework.http.ResponseEntity;
 
 public interface AuthService {
 
-  ResponseEntity<UserEntity> registerUser(UserEntity userEntity);
+    ResponseEntity<UserEntity> registerUser(UserEntity userEntity);
 
-  ResponseEntity<AuthResponse> loginUser(AuthRequest authRequest);
+    ResponseEntity<AuthResponse> loginUser(AuthRequest authRequest);
 
-  ResponseEntity<String> testLoggedUserName(Long userId);
+    ResponseEntity<String> testLoggedUserName(Long userId);
 }

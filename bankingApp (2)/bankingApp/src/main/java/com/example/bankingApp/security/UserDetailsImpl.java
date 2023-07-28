@@ -1,4 +1,5 @@
 package com.example.bankingApp.security;
+
 import lombok.Builder;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
@@ -12,56 +13,57 @@ import java.util.List;
 @Builder
 @Setter
 public class UserDetailsImpl implements UserDetails {
-  private Long userId;
+    private Long userId;
 
-  private String username;
+    private String username;
 
-  private String email;
+    private String email;
 
-  private String password;
+    private String password;
 
-  private LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 
-  @Override
-  public Collection<? extends GrantedAuthority> getAuthorities() {
-    List<GrantedAuthority> authorities = new ArrayList<>();
-    return authorities;
-  }
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        return authorities;
+    }
 
-  @Override
-  public String getPassword() {
-    return password;
-  }
+    @Override
+    public String getPassword() {
+        return password;
+    }
 
-  @Override
-  public String getUsername() {
-    return email;
-  }
-  public Long getUserId() {
-    return userId;
-  }
+    @Override
+    public String getUsername() {
+        return email;
+    }
 
-  public String getEmail() {
-    return email;
-  }
+    public Long getUserId() {
+        return userId;
+    }
 
-  @Override
-  public boolean isAccountNonExpired() {
-    return true;
-  }
+    public String getEmail() {
+        return email;
+    }
 
-  @Override
-  public boolean isAccountNonLocked() {
-    return true;
-  }
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
 
-  @Override
-  public boolean isCredentialsNonExpired() {
-    return true;
-  }
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
 
-  @Override
-  public boolean isEnabled() {
-    return true;
-  }
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }

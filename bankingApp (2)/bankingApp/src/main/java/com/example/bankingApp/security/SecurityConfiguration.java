@@ -21,45 +21,45 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfiguration {
 
-  private final JwtAuthenticationFilter jwtAuthenticationFilter;
-  private final CustomerUserDetailsService customerUserDetailsService;
-  private final AuthEntryPointJwt unauthorizedHandler;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomerUserDetailsService customerUserDetailsService;
+    private final AuthEntryPointJwt unauthorizedHandler;
 
-  @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http.csrf(csrf -> csrf.disable())
-        .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
-        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(auth ->
-            auth.requestMatchers("/auth/register").permitAll()
-                .requestMatchers("/auth/login").permitAll()
-                .anyRequest().authenticated()
-        );
-    http.authenticationProvider(authenticationProvider());
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.csrf(csrf -> csrf.disable())
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth ->
+                        auth.requestMatchers("/auth/register").permitAll()
+                                .requestMatchers("/auth/login").permitAll()
+                                .anyRequest().authenticated()
+                );
+        http.authenticationProvider(authenticationProvider());
 
-    http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-    return http.build();
-  }
+        return http.build();
+    }
 
-  @Bean
-  public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-    return authenticationConfiguration.getAuthenticationManager();
-  }
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
 
-  @Bean
-  public DaoAuthenticationProvider authenticationProvider() {
-    DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
 
-    authProvider.setUserDetailsService(customerUserDetailsService);
-    authProvider.setPasswordEncoder(bCryptPasswordEncoder());
+        authProvider.setUserDetailsService(customerUserDetailsService);
+        authProvider.setPasswordEncoder(bCryptPasswordEncoder());
 
-    return authProvider;
-  }
+        return authProvider;
+    }
 
 
-  @Bean
-  public BCryptPasswordEncoder bCryptPasswordEncoder() {
-    return new BCryptPasswordEncoder();
-  }
+    @Bean
+    public BCryptPasswordEncoder bCryptPasswordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }

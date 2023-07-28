@@ -21,6 +21,7 @@ public class PdfService {
             return null;
         }
     }
+
     public static String createPdfDownloadLink(String content) {
         byte[] pdfContent = createPdfContent(content);
         if (pdfContent == null) {

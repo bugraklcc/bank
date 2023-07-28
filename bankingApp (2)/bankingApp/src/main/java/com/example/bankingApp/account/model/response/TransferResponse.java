@@ -1,4 +1,5 @@
 package com.example.bankingApp.account.model.response;
+
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;

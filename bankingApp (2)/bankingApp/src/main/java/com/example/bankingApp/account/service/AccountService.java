@@ -12,16 +12,17 @@ import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 public interface AccountService {
-  ResponseEntity<String> createAccount(Account account);
+    ResponseEntity<String> createAccount(Account account);
 
-  ResponseEntity<List<AccountList>> getAccountsByUserId();
+    ResponseEntity<List<AccountList>> getAccountsByUserId();
 
-  ResponseEntity<WithdrawResponse> deposit(DepositRequest depositRequest);
+    ResponseEntity<WithdrawResponse> deposit(DepositRequest depositRequest);
 
-  ResponseEntity<TransferResponse> transfer(TransferRequest transferRequest);
+    ResponseEntity<TransferResponse> transfer(TransferRequest transferRequest);
 
-  ResponseEntity<String> depositWithCurrency(Long accountId, String amount, String currency);
+    ResponseEntity<String> depositWithCurrency(Long accountId, String amount, String currency);
 
-  ResponseEntity<String> transferWithCurrency(Long sourceAccountId, Long targetAccountId, String amount, String currency);
-  ResponseEntity<WithdrawResponse> withdraw(WithdrawRequest withdrawRequest);
+    ResponseEntity<String> transferWithCurrency(Long sourceAccountId, Long targetAccountId, String amount, String currency);
+
+    ResponseEntity<WithdrawResponse> withdraw(WithdrawRequest withdrawRequest);
 }

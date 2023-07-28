@@ -12,7 +12,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(AuthErrorResponse.class)
     public ResponseEntity<AuthErrorResponse> handleCustomException(AuthErrorResponse errorResponse) {
+
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
 }

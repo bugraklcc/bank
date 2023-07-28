@@ -5,16 +5,16 @@ import lombok.Data;
 @Data
 public class TransferRequest {
 
-        private Long sourceAccountId;
-        private Long targetAccountId;
-        private String amount;
-        private String currency;
+    private Long sourceAccountId;
+    private Long targetAccountId;
+    private String amount;
+    private String currency;
 
-        public String getCurrency() {
-                return currency;
-        }
+    public String getCurrency() {
+        return currency;
+    }
 
-        public void setCurrency(String currency) {
-                this.currency = currency;
-        }
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
 }
