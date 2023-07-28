@@ -17,7 +17,6 @@ import com.example.bankingApp.auth.repository.UserRepository;
 import com.example.bankingApp.auth.utils.AuthenticationUtils;
 import com.example.bankingApp.transaction.model.Transaction;
 import com.example.bankingApp.transaction.repository.TransactionRepository;
-import com.itextpdf.text.Paragraph;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -210,7 +209,6 @@ public class AccountServiceImpl implements AccountService {
             String transactionType = "Para Transferi";
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             String transactionDate = LocalDateTime.now().format(formatter);
-            Paragraph receiverHeader = new Paragraph("Alıcı Hesap Bilgileri");
             String pdfContent = "Yapılan İşlem: " + transactionType + "\n"
                     + "İşlem Tarihi: " + transactionDate + "\n"
                     + "Gönderen Hesap No: " + sourceAccountId + "\n"
