@@ -17,12 +17,15 @@ import com.example.bankingApp.auth.repository.UserRepository;
 import com.example.bankingApp.auth.utils.AuthenticationUtils;
 import com.example.bankingApp.transaction.model.Transaction;
 import com.example.bankingApp.transaction.repository.TransactionRepository;
+import com.itextpdf.text.Paragraph;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,7 +38,7 @@ public class AccountServiceImpl implements AccountService {
     private final UserRepository userRepository;
     private final AuthenticationUtils authenticationUtils;
     private final ExchangeService exchangeService;
-
+    private final PdfService pdfService;
     @Override
     public ResponseEntity<String> createAccount(Account account) {
 
@@ -99,7 +102,21 @@ public class AccountServiceImpl implements AccountService {
                 .previousBalance(currentBalance.toString())
                 .newBalance(newBalance.toString())
                 .build();
+        String transactionType = "Para Yatırma";
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String transactionDate = LocalDateTime.now().format(formatter);
 
+        String pdfContent = "Yapılan İşlem: " + transactionType + "\n"
+                + "İşlem Tarihi: " + transactionDate + "\n"
+                + "Hesap No: " + response.getAccountId() + "\n"
+                + "Kullanıcı Adı: " + response.getUsername() + "\n"
+                + "E-Posta: " + response.getEmail() + "\n"
+                + "Önceki Bakiye: " + response.getPreviousBalance() + "\n"
+                + "Yeni Bakiye: " + response.getNewBalance() + "\n";
+        String pdfFilePath = "pdf_output" + response.getAccountId() + "_deposit.pdf";
+
+        String pdfCreationResult = pdfService.createPdf(pdfContent, pdfFilePath);
+        System.out.println(pdfCreationResult);
         return ResponseEntity.ok(response);
     }
 
@@ -135,7 +152,21 @@ public class AccountServiceImpl implements AccountService {
             transactionRepository.save(transaction);
 
             response.setNewBalance(newBalance.toString()); // Yeni bakiyeyi set edelim
-            response.setPdfDownloadLink(createPdfDownloadLink(response)); // PDF indirme linkini set edelim
+            String transactionType = "Para Çekme";
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String transactionDate = LocalDateTime.now().format(formatter);
+
+            String pdfContent = "Yapılan İşlem: " + transactionType + "\n"
+                    + "İşlem Tarihi: " + transactionDate + "\n"
+                    + "Hesap No: " + response.getAccountId() + "\n"
+                    + "Kullanıcı Adı: " + response.getUsername() + "\n"
+                    + "E-Posta: " + response.getEmail() + "\n"
+                    + "Önceki Bakiye: " + response.getPreviousBalance() + "\n"
+                    + "Yeni Bakiye: " + response.getNewBalance() + "\n";
+            String pdfFilePath = "pdf_output" + response.getAccountId() + "_withdraw.pdf";
+
+            String pdfCreationResult = pdfService.createPdf(pdfContent, pdfFilePath);
+            System.out.println(pdfCreationResult);
         } else {
             // Yeterli bakiye yok, çekme işlemi gerçekleştirilemedi
             response.setNewBalance(currentBalance.toString()); // Yeni bakiyeyi önceki bakiye ile aynı yapalım
@@ -144,17 +175,6 @@ public class AccountServiceImpl implements AccountService {
         }
 
         return ResponseEntity.ok(response);
-    }
-
-    // PDF içeriğini alarak PDF indirme linkini oluşturan yardımcı metod
-    private String createPdfDownloadLink(WithdrawResponse response) {
-        String content = "Hesap No: " + response.getAccountId() + "\n"
-                + "Kullanıcı Adı: " + response.getUsername() + "\n"
-                + "E-Posta: " + response.getEmail() + "\n"
-                + "Önceki Bakiye: " + response.getPreviousBalance() + "\n"
-                + "Yeni Bakiye: " + response.getNewBalance() + "\n";
-
-        return PdfService.createPdfDownloadLink(content);
     }
 
     @Override
@@ -173,13 +193,6 @@ public class AccountServiceImpl implements AccountService {
         BigDecimal newSourceBalance = sourceBalance.subtract(amount);
         BigDecimal newTargetBalance = targetBalance.add(amount);
 
-        TransferResponse response = TransferResponse.builder()
-                .sourceAccountId(sourceAccountId)
-                .targetAccountId(targetAccountId)
-                .sourceBalance(sourceBalance.toString())
-                .targetBalance(targetBalance.toString())
-                .build();
-
         if (newSourceBalance.compareTo(BigDecimal.ZERO) >= 0) {
 
             sourceAccount.setBalance(newSourceBalance);
@@ -194,14 +207,41 @@ public class AccountServiceImpl implements AccountService {
             transaction.setUser(sourceAccount.getUser());
             transactionRepository.save(transaction);
 
-            response.setSourceBalance(newSourceBalance.toString()); // Kaynak hesap yeni bakiyesi
-            response.setTargetBalance(newTargetBalance.toString()); // Hedef hesap yeni bakiyesi
+            String transactionType = "Para Transferi";
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String transactionDate = LocalDateTime.now().format(formatter);
+            Paragraph receiverHeader = new Paragraph("Alıcı Hesap Bilgileri");
+            String pdfContent = "Yapılan İşlem: " + transactionType + "\n"
+                    + "İşlem Tarihi: " + transactionDate + "\n"
+                    + "Gönderen Hesap No: " + sourceAccountId + "\n"
+                    + "Gönderen Kullanıcı Adı: " + sourceAccount.getUser().getUsername() + "\n"
+                    + "Gönderen E-Posta: " + sourceAccount.getUser().getEmail() + "\n"
+                    + "Gönderen Hesap Önceki Bakiye: " + sourceBalance + "\n"
+                    + "Gönderen Hesap Yeni Bakiye: " + newSourceBalance + "\n"
+                    + "Transfer Edilen Miktar: " + amount + "\n"
+                    + "Alıcı Hesap No: " + targetAccountId + "\n"
+                    + "Alıcı Kullanıcı Adı: " + targetAccount.getUser().getUsername() + "\n"
+                    + "Alıcı E-Posta: " + targetAccount.getUser().getEmail() + "\n"
+                    + "Alıcı Hesap Önceki Bakiye: " + targetBalance + "\n"
+                    + "Alıcı Hesap Yeni Bakiye: " + newTargetBalance + "\n";
+
+            String pdfFilePath = "pdf_output" + sourceAccountId + "_transfer.pdf";
+
+            String pdfCreationResult = pdfService.createPdf(pdfContent, pdfFilePath);
+            System.out.println(pdfCreationResult);
+
+            TransferResponse response = TransferResponse.builder()
+                    .sourceAccountId(sourceAccountId)
+                    .targetAccountId(targetAccountId)
+                    .sourceBalance(sourceBalance.toString())
+                    .targetBalance(targetBalance.toString())
+                    .build();
+
+            return ResponseEntity.ok(response);
         } else {
             // Yetersiz bakiye, transfer işlemi gerçekleştirilemedi
             throw new AuthErrorResponse(AuthErrorResponseType.INSUFFICIENT_BALANCE);
         }
-
-        return ResponseEntity.ok(response);
     }
 
     @Override
