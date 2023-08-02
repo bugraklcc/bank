@@ -28,7 +28,6 @@ public class Account {
 
     @Column(name = "balance", nullable = false)
     private BigDecimal balance;
-
     @Column(name = "currency", nullable = false)
     private String currency;
 
@@ -37,7 +36,7 @@ public class Account {
     private LocalDateTime createdAt;
     private String username;
     private String email;
-
+    private Long id;
     public String toString() {
         return "Account{" +
                 "accountId=" + accountId +
@@ -63,6 +62,7 @@ public class Account {
     public void setEmail(String email) {
         this.email = email;
     }
+
 }
 
 

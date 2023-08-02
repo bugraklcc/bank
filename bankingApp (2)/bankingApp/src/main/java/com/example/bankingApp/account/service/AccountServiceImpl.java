@@ -1,12 +1,8 @@
 package com.example.bankingApp.account.service;
 
 import com.example.bankingApp.account.model.Account;
-import com.example.bankingApp.account.model.request.DepositRequest;
-import com.example.bankingApp.account.model.request.TransferRequest;
-import com.example.bankingApp.account.model.request.WithdrawRequest;
-import com.example.bankingApp.account.model.response.AccountList;
-import com.example.bankingApp.account.model.response.TransferResponse;
-import com.example.bankingApp.account.model.response.WithdrawResponse;
+import com.example.bankingApp.account.model.request.*;
+import com.example.bankingApp.account.model.response.*;
 import com.example.bankingApp.account.repository.AccountRepository;
 import com.example.bankingApp.account.service.exchange.ExchangeService;
 import com.example.bankingApp.account.service.pdf.PdfService;
@@ -23,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -38,16 +35,17 @@ public class AccountServiceImpl implements AccountService {
     private final AuthenticationUtils authenticationUtils;
     private final ExchangeService exchangeService;
     private final PdfService pdfService;
+
     @Override
     public ResponseEntity<String> createAccount(Account account) {
-
         UserEntity userInfo = userRepository.findById(authenticationUtils.getCurrentUserId()).orElse(null);
 
         if (userInfo == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("User not found");
         }
-        account.setUser(userInfo);
+
+        account.setUser(userInfo); // Kullanıcı nesnesini hesap nesnesine bağlamayı burada yapın
         accountRepository.save(account);
         return ResponseEntity.ok("Hesap başarıyla oluşturuldu.");
     }
@@ -243,74 +241,160 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public ResponseEntity<String> depositWithCurrency(Long accountId, String amount, String currency) {
-        // Burada döviz kuru servisine çağrı yaparak güncel döviz kurlarını alabilir ve para yüklemeyi gerçekleştirebilirsiniz.
-        // Döviz kurlarını kullanarak para yükleme işlemini implemente edin.
+    public ResponseEntity<DepositWithResponse> depositWithCurrency(DepositRequest depositRequest) {
+        Long accountId = depositRequest.getAccountId();
+        String amount = depositRequest.getAmount();
+        String currency = depositRequest.getCurrency();
         BigDecimal amountValue = new BigDecimal(amount);
-        // Döviz kurlarını exchangeService üzerinden alalım
-        BigDecimal exchangeRate = exchangeService.getExchangeRate(currency, "TRY");
-        // İlk parametre verilen para birimine, ikinci parametre ise çevrilmek istenen para birimine karşılık gelen kuru döndürecektir.
-        if (exchangeRate == null) {
-            return ResponseEntity.badRequest().body("Döviz kuru bulunamadı. Para yükleme işlemi gerçekleştirilemedi.");
+
+        // Hesabı alın
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("Hesap bulunamadı"));
+
+        // Hesap para birimiyle yatırılan para birimi uyuşuyor mu kontrol edin
+        if (!account.getCurrency().equalsIgnoreCase(currency)) {
+            // Para birimi uyuşmazlığı, döviz kuru ile dönüşüm yapın
+            BigDecimal convertedAmount = exchangeService.convertAmount(currency, account.getCurrency(), amountValue);
+            amountValue = convertedAmount;
         }
 
-        BigDecimal newBalance = amountValue.multiply(exchangeRate);
-        // Hesap üzerinde güncelleme yapalım
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
-        BigDecimal currentBalance = account.getBalance();
-        BigDecimal updatedBalance = currentBalance.add(newBalance);
-        account.setBalance(updatedBalance);
+        // Yatırılan miktarı hesap para birimine çevirin
+        BigDecimal newBalance = account.getBalance().add(amountValue);
+        account.setBalance(newBalance);
         accountRepository.save(account);
-        // Transaction kaydını yapalım
+
+        // İşlem detaylarını kaydedin
         Transaction transaction = new Transaction();
-        transaction.setSender(null); // Para yükleme işleminde gönderen yok
+        transaction.setSender(null); // Para yatırma işleminde gönderen yok
         transaction.setReceiver(account);
-        transaction.setAmount(newBalance);
+        transaction.setAmount(amountValue);
         transaction.setCurrency(account.getCurrency());
         transaction.setUser(account.getUser());
         transactionRepository.save(transaction);
-        return ResponseEntity.ok("Para yükleme işlemi başarılı. Yeni bakiye: " + updatedBalance);
+
+        // Yanıt nesnesini hazırlayın
+        DepositWithResponse response = DepositWithResponse.builder()
+                .status("success")
+                .message("Para yatırma işlemi başarılı.")
+                .username(account.getUser().getUsername())
+                .accountId(accountId)
+                .email(account.getUser().getEmail())
+                .previousBalance(account.getBalance().subtract(amountValue).setScale(2, RoundingMode.HALF_EVEN).toString())
+                .newBalance(newBalance.setScale(2, RoundingMode.HALF_EVEN).toString())
+                .currency(account.getCurrency())
+                .build();
+        String transactionType = "Para Yatırma";
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String transactionDate = LocalDateTime.now().format(formatter);
+
+        String pdfContent = "Yapılan İşlem: " + transactionType + "\n"
+                + "İşlem Tarihi: " + transactionDate + "\n"
+                + "Hesap No: " + response.getAccountId() + "\n"
+                + "Kullanıcı Adı: " + response.getUsername() + "\n"
+                + "E-Posta: " + response.getEmail() + "\n"
+                + "Önceki Bakiye: " + response.getPreviousBalance() + "\n"
+                + "Yeni Bakiye: " + response.getNewBalance() + "\n";
+        String pdfFilePath = "pdf_output" + response.getAccountId() + "_depositWith.pdf";
+
+        String pdfCreationResult = pdfService.createPdf(pdfContent, pdfFilePath);
+        System.out.println(pdfCreationResult);
+        return ResponseEntity.ok(response);
     }
 
-    @Override
-    public ResponseEntity<String> transferWithCurrency(Long sourceAccountId, Long targetAccountId, String amount, String currency) {
 
-        BigDecimal amountValue = new BigDecimal(amount);
-        BigDecimal exchangeRate = exchangeService.getExchangeRate(currency, "TRY");
-        if (exchangeRate == null) {
-            return ResponseEntity.badRequest().body("Döviz kuru bulunamadı. Para transferi işlemi gerçekleştirilemedi.");
+
+    @Override
+    public ResponseEntity<TransferWithResponse> transferWithCurrency(TransferWithRequest transferWithRequest) {
+        BigDecimal amountValue = new BigDecimal(transferWithRequest.getAmount());
+
+        // Fetch the source and target accounts
+        Account sourceAccount = accountRepository.findById(transferWithRequest.getSourceAccountId())
+                .orElseThrow(() -> new IllegalArgumentException("Source account not found"));
+        Account targetAccount = accountRepository.findById(transferWithRequest.getTargetAccountId())
+                .orElseThrow(() -> new IllegalArgumentException("Target account not found"));
+
+        // Check if both accounts have the same currency or find an exchange rate
+        BigDecimal exchangeRate = BigDecimal.ONE; // Default exchange rate for the same currency
+        String transferCurrency = transferWithRequest.getCurrency(); // Transfer için kullanılacak para birimi
+        if (!sourceAccount.getCurrency().equals(transferCurrency)) {
+            exchangeRate = exchangeService.getExchangeRate(sourceAccount.getCurrency(), transferCurrency);
+            if (exchangeRate == null) {
+                TransferWithResponse response = TransferWithResponse.builder()
+                        .status("error")
+                        .message("Döviz kuru bulunamadı. Para transferi işlemi gerçekleştirilemedi.")
+                        .build();
+                return ResponseEntity.badRequest().body(response);
+            }
         }
 
+        // Convert the amount to the target currency
         BigDecimal transferredAmount = amountValue.multiply(exchangeRate);
-        Account sourceAccount = accountRepository.findById(sourceAccountId)
-                .orElseThrow(() -> new IllegalArgumentException("Source account not found"));
+
+        // Check if the source account has sufficient balance
         BigDecimal sourceBalance = sourceAccount.getBalance();
-        BigDecimal newSourceBalance = sourceBalance.subtract(transferredAmount);
-
+        BigDecimal newSourceBalance = sourceBalance.subtract(amountValue);
         if (newSourceBalance.compareTo(BigDecimal.ZERO) >= 0) {
-
+            // Update the source account balance
             sourceAccount.setBalance(newSourceBalance);
             accountRepository.save(sourceAccount);
-            Account targetAccount = accountRepository.findById(targetAccountId)
-                    .orElseThrow(() -> new IllegalArgumentException("Target account not found"));
+
+            // Update the target account balance
             BigDecimal targetBalance = targetAccount.getBalance();
             BigDecimal newTargetBalance = targetBalance.add(transferredAmount);
             targetAccount.setBalance(newTargetBalance);
             accountRepository.save(targetAccount);
+
+            // Store the transaction details
             Transaction transaction = new Transaction();
             transaction.setSender(sourceAccount);
             transaction.setReceiver(targetAccount);
             transaction.setAmount(transferredAmount);
             transaction.setCurrency(sourceAccount.getCurrency());
             transaction.setUser(sourceAccount.getUser());
+            transaction.setCreatedAt(LocalDateTime.now()); // İşlem tarihini ekleyin
             transactionRepository.save(transaction);
-            return ResponseEntity.ok("Para transferi işlemi başarılı. Kaynak hesap bakiyesi: " + newSourceBalance
-                    + ", Hedef hesap bakiyesi: " + newTargetBalance);
+
+            // Prepare the response object
+            TransferWithResponse response = TransferWithResponse.builder()
+                    .sourceAccountId(sourceAccount.getAccountId())
+                    .senderUsername(sourceAccount.getUser().getUsername())
+                    .senderEmail(sourceAccount.getUser().getEmail())
+                    .sourceBalance(sourceBalance.toString())
+                    .targetAccountId(targetAccount.getAccountId())
+                    .receiverUsername(targetAccount.getUser().getUsername())
+                    .receiverEmail(targetAccount.getUser().getEmail())
+                    .targetBalance(targetBalance.toString())
+                    .transferCurrency(transferCurrency)
+                    .transferredAmount(transferredAmount.toString())
+                    .build();
+            String transactionType = "Para Transferi";
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String transactionDate = LocalDateTime.now().format(formatter);
+            String pdfContent = "Yapılan İşlem: " + transactionType + "\n"
+                    + "İşlem Tarihi: " + transactionDate + "\n"
+                    + "Gönderen Hesap No: " + response.getSourceAccountId() + "\n"
+                    + "Gönderen Kullanıcı Adı: " + response.getSenderUsername() + "\n"
+                    + "Gönderen E-Posta: " + response.getSenderEmail() + "\n"
+                    + "Gönderen Hesap Önceki Bakiye: " + response.getSourceBalance() + "\n"
+                    + "Gönderen Hesap Yeni Bakiye: " + newSourceBalance + "\n"
+                    + "Transfer Edilen Miktar: " + response.getTransferredAmount() + "\n"
+                    + "Alıcı Hesap No: " + response.getTargetAccountId() + "\n"
+                    + "Alıcı Kullanıcı Adı: " + response.getReceiverUsername() + "\n"
+                    + "Alıcı E-Posta: " + response.getReceiverEmail() + "\n"
+                    + "Alıcı Hesap Önceki Bakiye: " + response.getTargetBalance() + "\n"
+                    + "Alıcı Hesap Yeni Bakiye: " + newTargetBalance + "\n";
+
+            String pdfFilePath = "pdf_output" + response.getSourceAccountId() + "_transferWith.pdf";
+
+            String pdfCreationResult = pdfService.createPdf(pdfContent, pdfFilePath);
+            System.out.println(pdfCreationResult);
+            return ResponseEntity.ok(response);
         } else {
-            return ResponseEntity.badRequest().body("Kaynak hesabın bakiyesi yetersiz. Transfer işlemi gerçekleştirilemedi.");
+            TransferWithResponse response = TransferWithResponse.builder()
+                    .status("error")
+                    .message("Kaynak hesabın bakiyesi yetersiz. Transfer işlemi gerçekleştirilemedi.")
+                    .build();
+            return ResponseEntity.badRequest().body(response);
         }
     }
-
-
 }

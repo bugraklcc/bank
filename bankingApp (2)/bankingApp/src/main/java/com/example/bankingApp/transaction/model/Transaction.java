@@ -38,12 +38,15 @@ public class Transaction {
     @Column(name = "amount", nullable = false)
     private BigDecimal amount;
 
-    @Column(name = "currency", nullable = false)
+    @Column(name = "currency")
     private String currency;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
+    private String sourceCurrency;
+    private String targetCurrency;
+    private LocalDateTime transactionDate;
 
     @Override
     public String toString() {

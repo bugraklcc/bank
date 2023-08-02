@@ -3,10 +3,9 @@ package com.example.bankingApp.account.controller;
 import com.example.bankingApp.account.model.Account;
 import com.example.bankingApp.account.model.request.DepositRequest;
 import com.example.bankingApp.account.model.request.TransferRequest;
+import com.example.bankingApp.account.model.request.TransferWithRequest;
 import com.example.bankingApp.account.model.request.WithdrawRequest;
-import com.example.bankingApp.account.model.response.AccountList;
-import com.example.bankingApp.account.model.response.TransferResponse;
-import com.example.bankingApp.account.model.response.WithdrawResponse;
+import com.example.bankingApp.account.model.response.*;
 import com.example.bankingApp.account.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -48,20 +47,15 @@ public class AccountController {
     }
 
     @PostMapping("/depositWithCurrency")
-    public ResponseEntity<String> depositWithCurrency(@RequestBody DepositRequest depositRequest) {
-        Long accountId = depositRequest.getAccountId();
-        String amount = depositRequest.getAmount();
-        String currency = depositRequest.getCurrency();
-        return accountService.depositWithCurrency(accountId, amount, currency);
+    public ResponseEntity<DepositWithResponse> depositWithCurrency(@RequestBody DepositRequest depositRequest) {
+
+        return accountService.depositWithCurrency(depositRequest);
     }
 
     @PostMapping("/transferWithCurrency")
-    public ResponseEntity<String> transferWithCurrency(@RequestBody TransferRequest transferRequest) {
-        Long sourceAccountId = transferRequest.getSourceAccountId();
-        Long targetAccountId = transferRequest.getTargetAccountId();
-        String amount = transferRequest.getAmount();
-        String currency = transferRequest.getCurrency();
-        return accountService.transferWithCurrency(sourceAccountId, targetAccountId, amount, currency);
+    public ResponseEntity<TransferWithResponse> transferWithCurrency(@RequestBody TransferWithRequest transferWithRequest) {
+
+        return accountService.transferWithCurrency(transferWithRequest);
     }
 
 }
