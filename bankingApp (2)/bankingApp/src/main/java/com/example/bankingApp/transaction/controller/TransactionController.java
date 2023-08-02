@@ -1,6 +1,7 @@
 package com.example.bankingApp.transaction.controller;
 
 import com.example.bankingApp.transaction.model.response.AccountList;
+import com.example.bankingApp.transaction.model.response.PublicAccountListResponse;
 import com.example.bankingApp.transaction.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,5 +21,10 @@ public class TransactionController {
     public ResponseEntity<List<AccountList>> getAllAccountLists() {
         List<AccountList> accountLists = transactionService.getAllAccountLists();
         return ResponseEntity.ok(accountLists);
+    }
+    @GetMapping("/public")
+    public ResponseEntity<PublicAccountListResponse> getAllAccountListsPublicView() {
+        PublicAccountListResponse response = transactionService.getAllAccountListsPublicView();
+        return ResponseEntity.ok(response);
     }
 }

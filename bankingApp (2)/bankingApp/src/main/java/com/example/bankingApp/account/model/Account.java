@@ -37,6 +37,7 @@ public class Account {
     private String username;
     private String email;
     private Long id;
+
     public String toString() {
         return "Account{" +
                 "accountId=" + accountId +

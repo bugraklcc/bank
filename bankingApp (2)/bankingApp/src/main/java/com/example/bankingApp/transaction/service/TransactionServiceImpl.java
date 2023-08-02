@@ -2,11 +2,14 @@ package com.example.bankingApp.transaction.service;
 
 import com.example.bankingApp.transaction.model.Transaction;
 import com.example.bankingApp.transaction.model.response.AccountList;
+import com.example.bankingApp.transaction.model.response.AccountListPublicView;
+import com.example.bankingApp.transaction.model.response.PublicAccountListResponse;
 import com.example.bankingApp.transaction.repository.TransactionRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,6 +22,20 @@ public class TransactionServiceImpl implements TransactionService {
     public List<AccountList> getAllAccountLists() {
         List<Transaction> transactions = transactionRepository.findAll();
         return transactions.stream().map(this::convertTransactionToAccountList).collect(Collectors.toList());
+    }
+
+    @Override
+    public PublicAccountListResponse getAllAccountListsPublicView() {
+        List<Transaction> transactions = transactionRepository.findAll();
+        List<AccountListPublicView> accountLists = new ArrayList<>();
+
+        for (Transaction transaction : transactions) {
+            accountLists.add(convertTransactionToAccountListPublicView(transaction));
+        }
+
+        PublicAccountListResponse response = new PublicAccountListResponse();
+        response.setAccountList(accountLists);
+        return response;
     }
 
     private AccountList convertTransactionToAccountList(Transaction transaction) {
@@ -57,4 +74,25 @@ public class TransactionServiceImpl implements TransactionService {
                 .build();
     }
 
+    private AccountListPublicView convertTransactionToAccountListPublicView(Transaction transaction) {
+        String transactionType;
+
+        if (transaction.getSender() != null && transaction.getReceiver() != null) {
+            transactionType = "Transfer";
+        } else if (transaction.getSender() != null) {
+            transactionType = "Withdrawal";
+        } else if (transaction.getReceiver() != null) {
+            transactionType = "Deposit";
+        } else {
+            transactionType = "Unknown";
+        }
+
+
+        AccountListPublicView accountList = new AccountListPublicView();
+        accountList.setTransactionType(transactionType);
+        accountList.setTransactionDate(transaction.getCreatedAt());
+        accountList.setTransactionAmount(transaction.getAmount().toString());
+
+        return accountList;
+    }
 }

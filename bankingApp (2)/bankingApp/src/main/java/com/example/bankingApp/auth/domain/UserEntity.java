@@ -38,4 +38,5 @@ public class UserEntity {
     private LocalDateTime createdAt;
     @OneToMany(mappedBy = "user")
     List<Account> accounts;
+
 }

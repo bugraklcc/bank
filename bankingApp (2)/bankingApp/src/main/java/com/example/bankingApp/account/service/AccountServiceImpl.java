@@ -302,7 +302,6 @@ public class AccountServiceImpl implements AccountService {
     }
 
 
-
     @Override
     public ResponseEntity<TransferWithResponse> transferWithCurrency(TransferWithRequest transferWithRequest) {
         BigDecimal amountValue = new BigDecimal(transferWithRequest.getAmount());
